@@ -21,7 +21,7 @@
   "redirects": [
     {
       "source": "/",
-      "destination": "app/warning/page.tsx",
+      "destination": "warning.html",
       "permanent": false
     }
   ]
