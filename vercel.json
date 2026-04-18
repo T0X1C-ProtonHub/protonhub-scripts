@@ -21,7 +21,7 @@
   "redirects": [
     {
       "source": "/",
-      "destination": "v0-proton-hub-website.vercel.app",
+      "destination": "",
       "permanent": false
     }
   ]
