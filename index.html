@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proton Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script>
+(function(){
+  const saved = localStorage.getItem('ph-theme');
+  const pref = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', saved || pref);
+})();
+</script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+
+[data-theme="light"]{
+  --bg:#edfaf7;--surface:#ffffff;--border:rgba(13,148,136,.14);--borderhv:rgba(13,148,136,.28);
+  --teal:#0d9488;--teal-dk:#0a7c71;--teal-dim:rgba(13,148,136,.09);--teal-glow:rgba(13,148,136,.2);
+  --text:#0b1f1c;--muted:rgba(11,31,28,.55);--faint:rgba(11,31,28,.32);--red:#e03e52;
+  --warn-bg:rgba(224,62,82,.07);--warn-border:rgba(224,62,82,.22);
+  --shadow:0 4px 24px rgba(13,148,136,.07);
+}
+[data-theme="dark"]{
+  --bg:#071210;--surface:#0f201e;--border:rgba(13,148,136,.16);--borderhv:rgba(13,148,136,.32);
+  --teal:#14b8a6;--teal-dk:#0d9488;--teal-dim:rgba(20,184,166,.1);--teal-glow:rgba(20,184,166,.22);
+  --text:#d8f5f1;--muted:rgba(216,245,241,.52);--faint:rgba(216,245,241,.3);--red:#f06070;
+  --warn-bg:rgba(240,96,112,.08);--warn-border:rgba(240,96,112,.25);
+  --shadow:0 4px 24px rgba(0,0,0,.3);
+}
+
+html{scroll-behavior:smooth;}
+body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background .3s,color .3s;}
+::selection{background:var(--teal);color:#fff;}
+*{user-select:none;}
+p,h1,h2,h3,h4,span,a,li{user-select:text;}
+
+.noise{position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.025'/%3E%3C/svg%3E");pointer-events:none;z-index:0;}
+.glow-top{position:fixed;top:-220px;left:50%;transform:translateX(-50%);width:900px;height:460px;background:radial-gradient(ellipse,var(--teal-glow) 0%,transparent 68%);pointer-events:none;z-index:0;transition:background .3s;}
+
+.page{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:0 24px;}
+
+.warn-banner{background:var(--warn-bg);border-bottom:1px solid var(--warn-border);padding:12px 24px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:.76rem;color:var(--red);text-align:center;line-height:1.5;position:sticky;top:0;z-index:50;backdrop-filter:blur(12px);transition:background .3s,border-color .3s;}
+.warn-banner svg{flex-shrink:0;opacity:.85;}
+
+nav{display:flex;align-items:center;justify-content:space-between;padding:22px 0;border-bottom:1px solid var(--border);animation:up .5s ease both;}
+.brand{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;letter-spacing:.03em;color:var(--text);text-decoration:none;}
+.brand em{font-style:normal;color:var(--teal);}
+.nav-right{display:flex;align-items:center;gap:10px;}
+.nav-pill{display:flex;align-items:center;gap:7px;font-size:.73rem;color:var(--muted);border:1px solid var(--border);background:var(--surface);padding:6px 13px;border-radius:6px;text-decoration:none;transition:border-color .2s,color .2s;}
+.nav-pill:hover{border-color:var(--borderhv);color:var(--teal);}
+.nav-pill svg{color:var(--teal);flex-shrink:0;}
+.theme-btn{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;}
+.theme-btn:hover{border-color:var(--borderhv);color:var(--teal);}
+.icon-sun{display:none;}
+.icon-moon{display:block;}
+[data-theme="dark"] .icon-sun{display:block;}
+[data-theme="dark"] .icon-moon{display:none;}
+
+section{padding:80px 0;border-bottom:1px solid var(--border);}
+section:last-of-type{border-bottom:none;}
+
+.reveal{opacity:0;transform:translateY(22px);transition:opacity .6s ease,transform .6s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+.reveal-left{opacity:0;transform:translateX(-22px);transition:opacity .6s ease,transform .6s ease;}
+.reveal-left.visible{opacity:1;transform:translateX(0);}
+.reveal-scale{opacity:0;transform:scale(.96);transition:opacity .55s ease,transform .55s ease;}
+.reveal-scale.visible{opacity:1;transform:scale(1);}
+
+.hero{padding:88px 0 78px;border-bottom:1px solid var(--border);animation:up .6s ease .1s both;}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.71rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);margin-bottom:20px;}
+h1{font-family:'Syne',sans-serif;font-size:clamp(2.7rem,7vw,4.3rem);font-weight:800;line-height:1.05;letter-spacing:-.03em;color:var(--text);margin-bottom:10px;}
+h1 em{font-style:normal;color:var(--teal);}
+.hero-tagline{font-family:'Syne',sans-serif;font-size:clamp(1rem,2.5vw,1.22rem);font-weight:600;color:var(--muted);letter-spacing:-.01em;margin-bottom:26px;}
+.hero-desc{font-size:.88rem;color:var(--muted);line-height:1.85;max-width:530px;margin-bottom:34px;}
+.hero-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.hero-stats{display:flex;align-items:center;gap:28px;margin-top:42px;flex-wrap:wrap;}
+.stat-item{display:flex;flex-direction:column;gap:3px;}
+.stat-num{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:var(--text);letter-spacing:-.02em;}
+.stat-num em{font-style:normal;color:var(--teal);}
+.stat-lbl{font-size:.71rem;color:var(--faint);letter-spacing:.06em;text-transform:uppercase;}
+.stat-divider{width:1px;height:34px;background:var(--border);}
+
+.btn{padding:12px 20px;border-radius:10px;font-family:'DM Mono',monospace;font-size:.81rem;font-weight:500;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;transition:all .2s ease;letter-spacing:.02em;}
+.btn-teal{background:var(--teal);color:#fff;}
+.btn-teal:hover{background:var(--teal-dk);box-shadow:0 6px 22px var(--teal-glow);transform:translateY(-2px);}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-ghost:hover{border-color:var(--borderhv);color:var(--text);background:var(--teal-dim);transform:translateY(-2px);}
+
+.section-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.71rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);margin-bottom:12px;}
+.section-title{font-family:'Syne',sans-serif;font-size:clamp(1.7rem,4vw,2.2rem);font-weight:800;letter-spacing:-.02em;color:var(--text);margin-bottom:7px;}
+.section-sub{font-size:.86rem;color:var(--muted);line-height:1.75;max-width:500px;margin-bottom:36px;}
+
+.story-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.story-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;box-shadow:var(--shadow);transition:border-color .2s,transform .2s;}
+.story-card:hover{border-color:var(--borderhv);transform:translateY(-3px);}
+.story-card.wide{grid-column:1/-1;display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:start;}
+.avatar{width:54px;height:54px;background:linear-gradient(135deg,var(--teal) 0%,#0a7c71 100%);border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;color:#fff;}
+.story-card-icon{width:36px;height:36px;background:var(--teal-dim);border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--teal);margin-bottom:13px;}
+.story-card h3{font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;margin-bottom:5px;color:var(--text);}
+.story-card p{font-size:.79rem;color:var(--muted);line-height:1.75;}
+.story-card p strong{color:var(--text);font-weight:500;}
+.story-handle{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;color:var(--text);margin-bottom:3px;}
+.story-handle span{background:linear-gradient(90deg,var(--teal),#0ea5e9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.story-role{font-size:.72rem;color:var(--faint);margin-bottom:13px;letter-spacing:.03em;}
+
+.faq-list{display:flex;flex-direction:column;gap:10px;}
+.faq-item{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow);transition:border-color .2s;}
+.faq-item:hover{border-color:var(--borderhv);}
+.faq-q{padding:17px 21px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;gap:16px;}
+.faq-q-text{font-family:'Syne',sans-serif;font-weight:600;font-size:.87rem;color:var(--text);}
+.faq-chevron{color:var(--teal);flex-shrink:0;transition:transform .25s ease;}
+.faq-item.open .faq-chevron{transform:rotate(180deg);}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease;padding:0 21px;}
+.faq-item.open .faq-a{max-height:240px;padding:0 21px 17px;}
+.faq-a p{font-size:.8rem;color:var(--muted);line-height:1.8;border-top:1px solid var(--border);padding-top:14px;}
+.faq-a a{color:var(--teal);text-decoration:none;}
+.faq-a a:hover{text-decoration:underline;}
+.v-badge{background:linear-gradient(90deg,var(--teal),#0ea5e9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:600;}
+
+.status-legend{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:28px;}
+.legend-item{display:flex;align-items:center;gap:8px;font-size:.75rem;color:var(--muted);}
+.orb{width:11px;height:11px;border-radius:50%;flex-shrink:0;}
+.orb-red{background:#ef4444;box-shadow:0 0 8px 2px rgba(239,68,68,.55);}
+.orb-yellow{background:#eab308;box-shadow:0 0 8px 2px rgba(234,179,8,.55);}
+.orb-green{background:#22c55e;box-shadow:0 0 8px 2px rgba(34,197,94,.55);}
+.orb-blue{background:#3b82f6;box-shadow:0 0 8px 2px rgba(59,130,246,.55);}
+.orb-purple{background:#a855f7;box-shadow:0 0 8px 2px rgba(168,85,247,.55);}
+.orb-gray{background:#6b7280;box-shadow:0 0 7px 1px rgba(107,114,128,.45);}
+.orb-white{background:#cbd5e1;box-shadow:0 0 8px 2px rgba(203,213,225,.55);border:1px solid rgba(0,0,0,.08);}
+
+.status-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;}
+.status-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow);transition:border-color .2s,transform .2s;cursor:pointer;}
+.status-card:hover{border-color:var(--borderhv);transform:translateY(-2px);}
+.status-card-head{padding:17px 19px;display:flex;align-items:center;justify-content:space-between;}
+.status-name{font-family:'Syne',sans-serif;font-weight:600;font-size:.86rem;color:var(--text);}
+.status-sublbl{font-size:.69rem;color:var(--faint);margin-top:3px;}
+.status-right{display:flex;align-items:center;gap:8px;}
+.orb-lg{width:13px;height:13px;border-radius:50%;flex-shrink:0;}
+.sc-chevron{color:var(--faint);transition:transform .25s ease;flex-shrink:0;}
+.status-card.open .sc-chevron{transform:rotate(180deg);}
+.status-dropdown{max-height:0;overflow:hidden;transition:max-height .32s ease;}
+.status-card.open .status-dropdown{max-height:160px;}
+.status-drop-inner{padding:0 19px 17px;border-top:1px solid var(--border);}
+.drop-label{font-size:.69rem;color:var(--faint);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;padding-top:14px;}
+.copy-box{display:flex;align-items:center;background:var(--bg);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.copy-code{flex:1;padding:9px 12px;font-family:'DM Mono',monospace;font-size:.69rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.copy-btn{padding:8px 13px;background:var(--teal-dim);border:none;border-left:1px solid var(--border);color:var(--teal);font-family:'DM Mono',monospace;font-size:.69rem;cursor:pointer;flex-shrink:0;transition:background .2s;display:flex;align-items:center;gap:6px;}
+.copy-btn:hover{background:rgba(13,148,136,.18);}
+.copy-btn.copied{color:#22c55e;}
+
+.changelog-section{padding:80px 0;border-bottom:1px solid var(--border);}
+.hint-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:22px;display:flex;gap:18px;flex-wrap:wrap;}
+.hint-item{display:flex;align-items:center;gap:8px;font-size:.75rem;color:var(--muted);}
+.hint-badge{font-family:'DM Mono',monospace;font-size:.72rem;font-weight:500;padding:2px 8px;border-radius:5px;}
+.hint-add{background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.25);}
+.hint-rem{background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.22);}
+
+.changelog-list{display:flex;flex-direction:column;gap:12px;}
+.changelog-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px 24px;box-shadow:var(--shadow);transition:border-color .2s,transform .2s;}
+.changelog-card:hover{border-color:var(--borderhv);transform:translateY(-2px);}
+.changelog-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
+.changelog-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;color:var(--text);}
+.changelog-ver{font-size:.71rem;font-weight:500;background:var(--teal-dim);border:1px solid rgba(13,148,136,.22);color:var(--teal);padding:3px 10px;border-radius:5px;letter-spacing:.06em;}
+.changelog-entries{display:flex;flex-direction:column;gap:7px;}
+.cl-entry{display:flex;align-items:flex-start;gap:10px;font-size:.79rem;color:var(--muted);line-height:1.6;}
+.cl-badge{font-family:'DM Mono',monospace;font-size:.69rem;font-weight:500;padding:1px 7px;border-radius:4px;flex-shrink:0;margin-top:1px;}
+.cl-add{background:rgba(34,197,94,.1);color:#22c55e;border:1px solid rgba(34,197,94,.2);}
+.cl-rem{background:rgba(239,68,68,.08);color:#ef4444;border:1px solid rgba(239,68,68,.18);}
+
+.discord-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:var(--shadow);}
+.discord-banner{height:120px;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);position:relative;overflow:hidden;}
+.discord-banner img{width:100%;height:100%;object-fit:cover;}
+.discord-banner-placeholder{width:100%;height:100%;background:linear-gradient(135deg,rgba(88,101,242,.3),rgba(20,184,166,.2));}
+.discord-body{padding:28px 32px 32px;}
+.discord-identity{display:flex;align-items:center;gap:16px;margin-bottom:16px;}
+.discord-icon-wrap{width:56px;height:56px;border-radius:14px;overflow:hidden;background:linear-gradient(135deg,#5865f2,#4752c4);display:flex;align-items:center;justify-content:center;flex-shrink:0;border:2px solid var(--border);}
+.discord-icon-wrap img{width:100%;height:100%;object-fit:cover;}
+.discord-name{font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;letter-spacing:-.02em;color:var(--text);}
+.discord-tag{font-size:.72rem;color:var(--faint);margin-top:2px;}
+.discord-desc{font-size:.81rem;color:var(--muted);line-height:1.75;margin-bottom:20px;max-width:480px;}
+.discord-stats{display:flex;gap:22px;margin-bottom:24px;flex-wrap:wrap;}
+.d-stat{display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--muted);}
+.d-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.d-dot.online{background:#22c55e;box-shadow:0 0 7px rgba(34,197,94,.65);}
+.d-dot.total{background:#94a3b8;box-shadow:0 0 7px rgba(148,163,184,.45);}
+.d-stat strong{color:var(--text);font-weight:600;}
+
+.btn-discord{background:#5865f2;color:#fff;padding:12px 20px;border-radius:10px;font-family:'DM Mono',monospace;font-size:.81rem;font-weight:500;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px;border:none;transition:all .2s ease;}
+.btn-discord:hover{background:#4752c4;box-shadow:0 6px 20px rgba(88,101,242,.3);transform:translateY(-2px);}
+
+footer{border-top:1px solid var(--border);padding:22px 0 28px;display:flex;flex-direction:column;gap:12px;}
+.foot-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.foot-brand{font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;color:var(--text);}
+.foot-brand em{font-style:normal;color:var(--teal);}
+.foot-links{display:flex;align-items:center;gap:18px;flex-wrap:wrap;}
+.foot-links a{font-size:.74rem;color:var(--faint);text-decoration:none;transition:color .2s;}
+.foot-links a:hover{color:var(--teal);}
+.foot-bottom{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.foot-copy{font-size:.72rem;color:var(--faint);line-height:1.6;}
+.foot-right{display:flex;align-items:center;gap:6px;font-size:.71rem;color:var(--faint);}
+.foot-right svg{color:var(--teal);}
+.dot{width:3px;height:3px;background:var(--border);border-radius:50%;display:inline-block;vertical-align:middle;margin:0 5px;}
+
+.theme-fixed{position:fixed;bottom:24px;right:24px;z-index:100;width:44px;height:44px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.1);transition:all .2s;}
+.theme-fixed:hover{border-color:var(--borderhv);color:var(--teal);box-shadow:0 6px 22px var(--teal-glow);}
+
+@keyframes up{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+
+@media(max-width:820px){
+  .story-grid{grid-template-columns:1fr;}
+  .story-card.wide{grid-template-columns:auto 1fr;}
+  .hero-stats{gap:18px;}
+  .stat-divider{display:none;}
+}
+@media(max-width:520px){
+  h1{font-size:2.3rem;}
+  nav{padding:18px 0;}
+  .story-card.wide{grid-template-columns:1fr;}
+  .status-grid{grid-template-columns:1fr;}
+  .discord-body{padding:20px 18px 24px;}
+  .foot-top,.foot-bottom{flex-direction:column;align-items:flex-start;}
+  .foot-links{gap:14px;}
+  .warn-banner{font-size:.72rem;}
+}
+</style>
+</head>
+<body>
+
+<div class="noise"></div>
+<div class="glow-top"></div>
+
+<div class="warn-banner">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+  We are not responsible for any bans received on Roblox. Bans are most likely caused by your own executor, not our script.
+</div>
+
+<div class="page">
+
+  <nav>
+    <a href="/" class="brand">Proton<em>Hub</em></a>
+    <div class="nav-right">
+      <a href="https://discord.gg/zFgkDf9ECq" target="_blank" class="nav-pill">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Discord
+      </a>
+      <button class="theme-btn" id="navTheme" aria-label="Toggle theme">
+        <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+        <svg class="icon-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <div class="eyebrow">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      Now in Version 2
+    </div>
+    <h1>Proton<em>Hub</em></h1>
+    <p class="hero-tagline">Fast, quick and instant.</p>
+    <p class="hero-desc">A community-built script hub packed with features, zero key system, and built to stay undetected. Made by players, for players.</p>
+    <div class="hero-actions">
+      <a href="https://discord.gg/zFgkDf9ECq" target="_blank" class="btn btn-teal">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Get Script
+      </a>
+      <a href="https://discord.gg/zFgkDf9ECq" target="_blank" class="btn btn-ghost">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Join Discord
+      </a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-item">
+        <span class="stat-num"><em>V2</em></span>
+        <span class="stat-lbl">Current Version</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-num">100<em>%</em></span>
+        <span class="stat-lbl">Keyless</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-num" id="heroMembers">—</span>
+        <span class="stat-lbl">Discord Members</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-num" id="heroOnline">—</span>
+        <span class="stat-lbl">Online Now</span>
+      </div>
+    </div>
+  </div>
+
+  <section>
+    <div class="section-eyebrow reveal">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      The Origin
+    </div>
+    <h2 class="section-title reveal">How it started.</h2>
+    <p class="section-sub reveal">One teenager. One idea. A whole lot of free time.</p>
+    <div class="story-grid">
+      <div class="story-card wide reveal-scale">
+        <div class="avatar">K</div>
+        <div>
+          <div class="story-handle">Kaiser <span>T0XïC</span></div>
+          <div class="story-role">Founder · Developer · the guy who started it all</div>
+          <p>It started simple — Kaiser was just a teen who wanted a script that actually worked. Not some half-baked, laggy, key-locked mess that expired every 24 hours. He was tired of getting banned and tired of waiting. So he built his own. What began as a personal project for one bored kid turned into <strong>Proton Hub</strong> — a full script hub built around one rule: it has to be good, genuinely good, and keyless. No paywalls, no daily keys, no nonsense. Just a clean, fast, undetected script that respects the people using it.</p>
+        </div>
+      </div>
+      <div class="story-card reveal">
+        <div class="story-card-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+        <h3>Built to Stay Fast</h3>
+        <p>Speed was non-negotiable from day one. Proton Hub is engineered to load quick and run light — even with multiple features active.</p>
+      </div>
+      <div class="story-card reveal">
+        <div class="story-card-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+        </div>
+        <h3>Always Maintained</h3>
+        <p>Kaiser keeps the script updated after every patch. Not monthly. Not when he feels like it. Whenever it needs it.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-eyebrow reveal">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+      FAQ
+    </div>
+    <h2 class="section-title reveal">Common questions.</h2>
+    <p class="section-sub reveal">Straight answers, no filler.</p>
+    <div class="faq-list">
+      <div class="faq-item reveal">
+        <div class="faq-q">
+          <span class="faq-q-text">Is the script bannable?</span>
+          <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+        <div class="faq-a"><p>No, the script isn't bannable. We make sure Proton Hub stays up to date so it remains undetected across patches.</p></div>
+      </div>
+      <div class="faq-item reveal">
+        <div class="faq-q">
+          <span class="faq-q-text">Does the script cause lag?</span>
+          <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+        <div class="faq-a"><p>It depends. If you're running a thousand features at once, yes. But if you use our built-in anti-afk and anti-lag system, it will actively try to reduce that for you.</p></div>
+      </div>
+      <div class="faq-item reveal">
+        <div class="faq-q">
+          <span class="faq-q-text">Is the script keyless?</span>
+          <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+        <div class="faq-a"><p>Yes, fully keyless right now. All scripts will stop being keyless starting from version <span class="v-badge">3.5</span>. The current version of Proton Hub is V2, so you're good for a while.</p></div>
+      </div>
+      <div class="faq-item reveal">
+        <div class="faq-q">
+          <span class="faq-q-text">How do I get the script?</span>
+          <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+        <div class="faq-a"><p>Head over to <a href="https://scriptblox.com" target="_blank">scriptblox.com</a> and search for <strong>Proton Hub</strong>. Or join the Discord at <a href="https://discord.gg/zFgkDf9ECq" target="_blank">discord.gg/zFgkDf9ECq</a> — links are always pinned there.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-eyebrow reveal">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Script Status
+    </div>
+    <h2 class="section-title reveal">Current status.</h2>
+    <p class="section-sub reveal">Tap a script to reveal the loadstring.</p>
+    <div class="status-legend reveal">
+      <div class="legend-item"><div class="orb orb-red"></div> Down</div>
+      <div class="legend-item"><div class="orb orb-yellow"></div> Usable — high risk</div>
+      <div class="legend-item"><div class="orb orb-green"></div> 99% Undetected</div>
+      <div class="legend-item"><div class="orb orb-blue"></div> Coming Soon</div>
+      <div class="legend-item"><div class="orb orb-purple"></div> 100% Undetected &amp; Updating</div>
+      <div class="legend-item"><div class="orb orb-gray"></div> Discontinued</div>
+      <div class="legend-item"><div class="orb orb-white"></div> Working On</div>
+    </div>
+    <div class="status-grid">
+      <div class="status-card reveal-scale" id="sc-muscle">
+        <div class="status-card-head">
+          <div>
+            <div class="status-name">Muscle Legends</div>
+            <div class="status-sublbl">100% Undetected &amp; Updating</div>
+          </div>
+          <div class="status-right">
+            <div class="orb orb-lg orb-purple"></div>
+            <svg class="sc-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+        </div>
+        <div class="status-dropdown">
+          <div class="status-drop-inner">
+            <div class="drop-label">Loadstring</div>
+            <div class="copy-box">
+              <span class="copy-code">loadstring(game:HttpGet("https://protonhub-scripts.vercel.app/scripts/api/get-raw/Muscle-Legends.luau"))()</span>
+              <button class="copy-btn" id="copyBtn">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                Copy
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="changelog-section">
+    <div class="section-eyebrow reveal">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      Changelogs
+    </div>
+    <h2 class="section-title reveal">What's changed.</h2>
+    <p class="section-sub reveal">Every update, documented.</p>
+    <div class="hint-box reveal">
+      <div class="hint-item"><span class="hint-badge hint-add">[+]</span> Added</div>
+      <div class="hint-item"><span class="hint-badge hint-rem">[-]</span> Removed</div>
+    </div>
+    <div class="changelog-list">
+      <div class="changelog-card reveal-scale">
+        <div class="changelog-header">
+          <span class="changelog-title">Muscle-Legends.luau</span>
+          <span class="changelog-ver">V2</span>
+        </div>
+        <div class="changelog-entries">
+          <div class="cl-entry"><span class="cl-badge cl-add">[+]</span><span>Redid UI</span></div>
+          <div class="cl-entry"><span class="cl-badge cl-add">[+]</span><span>Redid code to add less code</span></div>
+          <div class="cl-entry"><span class="cl-badge cl-add">[+]</span><span>Added styles to UI — includes customizable watermarks</span></div>
+          <div class="cl-entry"><span class="cl-badge cl-add">[+]</span><span>Sidebar Labels and Buttons</span></div>
+          <div class="cl-entry"><span class="cl-badge cl-rem">[-]</span><span>Old UI</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section>
+    <div class="section-eyebrow reveal">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Community
+    </div>
+    <h2 class="section-title reveal">Join the community.</h2>
+    <p class="section-sub reveal">Stay up to date on releases, updates, and everything in between.</p>
+    <div class="discord-card reveal-scale">
+      <div class="discord-banner" id="discordBanner">
+        <div class="discord-banner-placeholder" id="bannerPlaceholder"></div>
+      </div>
+      <div class="discord-body">
+        <div class="discord-identity">
+          <div class="discord-icon-wrap" id="discordIconWrap">
+            <svg width="28" height="22" viewBox="0 0 71 55" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M60.1045 4.8978C55.5792 2.8214 50.7265 1.2916 45.6527 0.41542C45.5603 0.39851 45.468 0.440769 45.4204 0.525289C44.7963 1.6353 44.105 3.0834 43.6209 4.2216C38.1637 3.4046 32.7345 3.4046 27.3892 4.2216C26.905 3.0581 26.1886 1.6353 25.5617 0.525289C25.5141 0.443589 25.4218 0.401329 25.3294 0.41542C20.2584 1.2888 15.4057 2.8186 10.8776 4.8978C10.8384 4.9147 10.8048 4.9429 10.7825 4.9795C1.57795 18.7309 -0.943561 32.1443 0.293408 45.3914C0.299005 45.4562 0.335386 45.5182 0.385761 45.5576C6.45866 50.0174 12.3413 52.7249 18.1147 54.5195C18.2071 54.5477 18.305 54.5139 18.3638 54.4378C19.7295 52.5728 20.9469 50.6063 21.9907 48.5383C22.0523 48.4172 21.9935 48.2735 21.8676 48.2256C19.9366 47.4931 18.0979 46.6 16.3292 45.5858C16.1893 45.5041 16.1781 45.304 16.3068 45.2082C16.679 44.9293 17.0513 44.6391 17.4067 44.3461C17.471 44.2926 17.5606 44.2813 17.6362 44.3151C29.2558 49.6202 41.8354 49.6202 53.3179 44.3151C53.3935 44.2785 53.4831 44.2898 53.5502 44.3433C53.9057 44.6363 54.2779 44.9293 54.6529 45.2082C54.7816 45.304 54.7732 45.5041 54.6333 45.5858C52.8646 46.6197 51.0259 47.4931 49.0921 48.2228C48.9662 48.2707 48.9102 48.4172 48.9718 48.5383C50.038 50.6034 51.2554 52.5699 52.5959 54.435C52.6519 54.5139 52.7526 54.5477 52.845 54.5195C58.6464 52.7249 64.529 50.0174 70.6019 45.5576C70.6551 45.5182 70.6887 45.459 70.6943 45.3942C72.1747 30.0791 68.2147 16.7757 60.1968 4.9823C60.1772 4.9429 60.1437 4.9147 60.1045 4.8978ZM23.7259 37.3253C20.2276 37.3253 17.3451 34.1136 17.3451 30.1693C17.3451 26.225 20.1717 23.0133 23.7259 23.0133C27.308 23.0133 30.1626 26.2532 30.1066 30.1693C30.1066 34.1136 27.28 37.3253 23.7259 37.3253ZM47.3178 37.3253C43.8196 37.3253 40.9371 34.1136 40.9371 30.1693C40.9371 26.225 43.7636 23.0133 47.3178 23.0133C50.9 23.0133 53.7545 26.2532 53.6986 30.1693C53.6986 34.1136 50.9 37.3253 47.3178 37.3253Z" fill="white"/></svg>
+          </div>
+          <div>
+            <div class="discord-name" id="discordName">Proton Hub</div>
+            <div class="discord-tag">Official Discord Server</div>
+          </div>
+        </div>
+        <p class="discord-desc">Get script updates, report issues, hang out with the community, and always get links to the latest version first.</p>
+        <div class="discord-stats">
+          <div class="d-stat">
+            <div class="d-dot online"></div>
+            <strong id="discOnline">—</strong>&nbsp;online
+          </div>
+          <div class="d-stat">
+            <div class="d-dot total"></div>
+            <strong id="discTotal">—</strong>&nbsp;members
+          </div>
+        </div>
+        <a href="https://discord.gg/zFgkDf9ECq" target="_blank" class="btn-discord">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Join Proton Hub
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="foot-top">
+      <div class="foot-brand">Proton<em>Hub</em> 2026–2027</div>
+      <div class="foot-links">
+        <a href="https://discord.gg/zFgkDf9ECq" target="_blank">Get Script</a>
+        <a href="https://discord.gg/zFgkDf9ECq" target="_blank">Discord</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="report-abuse.html">Report Abuse</a>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <div class="foot-copy">Copyright Infringement ©<span class="dot"></span>All Rights Reserved<span class="dot"></span>Proton Hub</div>
+      <div class="foot-right">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+        Security Gateway Active
+      </div>
+    </div>
+  </footer>
+
+</div>
+
+<button class="theme-fixed" id="fixedTheme" aria-label="Toggle theme">
+  <svg class="icon-moon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+  <svg class="icon-sun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+</button>
+
+<script>
+function setTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  localStorage.setItem('ph-theme',t);
+}
+function toggleTheme(){
+  setTheme(document.documentElement.getAttribute('data-theme')==='light'?'dark':'light');
+}
+document.getElementById('navTheme').addEventListener('click',toggleTheme);
+document.getElementById('fixedTheme').addEventListener('click',toggleTheme);
+
+document.querySelectorAll('.faq-q').forEach(q=>{
+  q.addEventListener('click',()=>{
+    const item=q.parentElement;
+    const isOpen=item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(i=>i.classList.remove('open'));
+    if(!isOpen)item.classList.add('open');
+  });
+});
+
+const scMuscle=document.getElementById('sc-muscle');
+scMuscle.addEventListener('click',()=>{
+  scMuscle.classList.toggle('open');
+});
+
+document.getElementById('copyBtn').addEventListener('click',e=>{
+  e.stopPropagation();
+  const str='loadstring(game:HttpGet("https://protonhub-scripts.vercel.app/scripts/api/get-raw/Muscle-Legends.luau"))()';
+  navigator.clipboard.writeText(str).then(()=>{
+    const btn=document.getElementById('copyBtn');
+    btn.classList.add('copied');
+    btn.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Copied';
+    setTimeout(()=>{
+      btn.classList.remove('copied');
+      btn.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg> Copy';
+    },2000);
+  });
+});
+
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.classList.add('visible');
+      observer.unobserve(e.target);
+    }
+  });
+},{threshold:0.12});
+
+document.querySelectorAll('.reveal,.reveal-left,.reveal-scale').forEach((el,i)=>{
+  el.style.transitionDelay=(i%4)*0.07+'s';
+  observer.observe(el);
+});
+
+fetch('https://discord.com/api/v9/invites/zFgkDf9ECq?with_counts=true')
+  .then(r=>r.json())
+  .then(d=>{
+    const total=d.approximate_member_count;
+    const online=d.approximate_presence_count;
+    if(total){
+      document.getElementById('heroMembers').textContent=total.toLocaleString();
+      document.getElementById('discTotal').textContent=total.toLocaleString();
+    }
+    if(online){
+      document.getElementById('heroOnline').textContent=online.toLocaleString();
+      document.getElementById('discOnline').textContent=online.toLocaleString();
+    }
+    const guild=d.guild;
+    if(guild){
+      if(guild.name)document.getElementById('discordName').textContent=guild.name;
+      if(guild.icon){
+        const iconWrap=document.getElementById('discordIconWrap');
+        iconWrap.innerHTML='<img src="https://cdn.discordapp.com/icons/'+guild.id+'/'+guild.icon+'.png" alt="Server Icon">';
+      }
+      if(guild.banner){
+        const banner=document.getElementById('discordBanner');
+        banner.innerHTML='<img src="https://cdn.discordapp.com/banners/'+guild.id+'/'+guild.banner+'.png?size=600" alt="Server Banner">';
+      }
+    }
+  })
+  .catch(()=>{});
+</script>
+</body>
+</html>
