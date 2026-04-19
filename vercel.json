@@ -6,22 +6,19 @@
         {
           "key": "Content-Type",
           "value": "text/plain; charset=utf-8"
-        },
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=300"
         }
       ]
     }
   ],
   "redirects": [
     {
+      "source": "/scripts/api/get-raw/Muscle-Legends.luau",
+      "destination": "/warn.html",
+      "permanent": false
+    },
+    {
       "source": "/",
-      "destination": "warn.html",
+      "destination": "/warn.html",
       "permanent": false
     }
   ]
